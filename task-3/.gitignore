@@ -1,0 +1,22 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+*.tfplan
+*.tfplan.*
+
+# IDE and editor files
+*.swp
+*.swo
+*.DS_Store
+.vscode/
+.idea/
+
+# Backup files
+*.bak
+*.orig
+
+# Local environment files
+.env
