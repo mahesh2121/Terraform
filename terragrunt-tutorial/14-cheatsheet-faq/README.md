@@ -161,6 +161,8 @@ a data lookup or a merged unit, not a dependency).
 
 ## 6. Where to go from here
 
+- [Lesson 15 — CI/CD Pipelines](../15-cicd-pipelines/README.md) ⭐ Level-3: plan on PR,
+  gated prod applies, OIDC auth, drift detection (with copy-paste workflows)
 - Official docs: **terragrunt.gruntwork.io** (function + CLI reference)
 - Gruntwork blog: production patterns (multi-account landing zones, CIS baselines)
 - Practice: extend the [capstone](../13-capstone-project/README.md) (RDS, ALB,

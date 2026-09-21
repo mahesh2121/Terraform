@@ -1,0 +1,67 @@
+# GATED PROD APPLY — runs ONLY when a human clicks "Run workflow"
+# (Actions tab) AND the `prod` environment approvers approve it.
+# This is Lesson 09's "promotion", enforced by machinery.
+# Copy to: .github/workflows/apply-prod.yml
+
+name: terragrunt-apply-prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type APPLY-PROD to confirm you reviewed the dev apply + PR plan'
+        required: true
+        default: "no"
+
+concurrency:
+  group: apply-prod
+  cancel-in-progress: false # queue prod applies, never overlap
+
+env:
+  TF_VERSION: "1.9.8"
+  TG_VERSION: "0.67.0"
+
+jobs:
+  apply:
+    name: apply-prod
+    runs-on: ubuntu-latest
+    # ⏸️ The run PAUSES here until the prod environment's required reviewers approve.
+    environment: prod
+
+    defaults:
+      run:
+        working-directory: terragrunt-tutorial/13-capstone-project/live/prod
+
+    steps:
+      - name: Confirm guard
+        run: |
+          test "${{ inputs.confirm }}" = "APPLY-PROD" || \
+            (echo "❌ Type APPLY-PROD to confirm." && exit 1)
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform ${{ env.TF_VERSION }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Install Terragrunt ${{ env.TG_VERSION }}
+        run: |
+          curl -sSL -o terragrunt \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/terragrunt
+
+      - name: Configure AWS credentials (OIDC 🔐, prod role)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: "Re-plan prod (safety: confirm zero surprises since the PR plan)"
+        run: terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 4
+
+      - name: Apply all prod units
+        run: terragrunt run-all apply --terragrunt-non-interactive --terragrunt-parallelism 4

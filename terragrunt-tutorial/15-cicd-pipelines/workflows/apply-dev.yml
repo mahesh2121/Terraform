@@ -1,0 +1,59 @@
+# AUTO-APPLY DEV — every merge to main deploys dev. No human gate:
+# dev must always reflect main. Prod stays manual (see apply-prod.yml).
+# Copy to: .github/workflows/apply-dev.yml
+
+name: terragrunt-apply-dev
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terragrunt-tutorial/13-capstone-project/live/dev/**"
+      - "terragrunt-tutorial/13-capstone-project/modules/**" # module change → redeploy dev
+      - "terragrunt-tutorial/13-capstone-project/terragrunt.hcl"
+
+# NEVER overlap two applies to the same env (state-lock + ordering safety):
+# queue them instead (cancel-in-progress: false).
+concurrency:
+  group: apply-dev
+  cancel-in-progress: false
+
+env:
+  TF_VERSION: "1.9.8"
+  TG_VERSION: "0.67.0"
+
+jobs:
+  apply:
+    name: apply-dev
+    runs-on: ubuntu-latest
+    environment: dev # auto-approved env holding vars.AWS_ROLE_ARN (dev role)
+
+    defaults:
+      run:
+        working-directory: terragrunt-tutorial/13-capstone-project/live/dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform ${{ env.TF_VERSION }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Install Terragrunt ${{ env.TG_VERSION }}
+        run: |
+          curl -sSL -o terragrunt \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/terragrunt
+
+      - name: Configure AWS credentials (OIDC 🔐)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Apply all dev units (dependency order, one command)
+        run: terragrunt run-all apply --terragrunt-non-interactive --terragrunt-parallelism 4

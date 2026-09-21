@@ -4,8 +4,8 @@ Hands-on Terraform + Terragrunt learning repository.
 
 ## 📖 Start here: Terragrunt Tutorial (basic → advanced)
 
-👉 **[terragrunt-tutorial/](terragrunt-tutorial/)** — a 15-lesson course
-(Lesson 00–14) that explains every Terragrunt concept with runnable examples:
+👉 **[terragrunt-tutorial/](terragrunt-tutorial/)** — a 16-lesson course
+(Lesson 00–15) that explains every Terragrunt concept with runnable examples:
 
 - What Terragrunt is & why it's a "Terraform wrapper"
 - `terragrunt.hcl`, `terraform { source }`, `inputs`, `locals`

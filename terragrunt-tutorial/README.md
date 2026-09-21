@@ -29,6 +29,7 @@ Terraform, and how to use every major concept with hands-on examples.
 | 12 | [Built-in Functions](12-functions/README.md) | `read_terragrunt_config`, `get_env`, `get_aws_account_id`, path functions, conditionals |
 | 13 | [Capstone Project](13-capstone-project/README.md) | Full real-world AWS project: VPC + EC2 + S3 wired together, multi-env |
 | 14 | [Cheatsheet & FAQ](14-cheatsheet-faq/README.md) | Command cheatsheet, Terraform vs Terragrunt, migration guide, troubleshooting |
+| 15 | [CI/CD Pipelines ⭐ L3](15-cicd-pipelines/README.md) | GitHub Actions: plan on PR, gated prod applies, OIDC auth, drift detection |
 
 ---
 

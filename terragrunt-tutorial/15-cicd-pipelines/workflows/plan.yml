@@ -1,0 +1,114 @@
+# PR GATE — plan every changed environment and post the diff as a PR comment.
+# Copy to: .github/workflows/plan.yml
+# Requires: GitHub Environments `dev` + `prod` each with variable AWS_ROLE_ARN (Lesson 15 §5),
+#           and branch protection requiring this workflow on `main`.
+
+name: terragrunt-plan
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "terragrunt-tutorial/13-capstone-project/**" # adjust to your live/ + modules/ paths
+      - ".github/workflows/plan.yml"
+
+# A new push cancels the older run for the same PR — always review the latest diff.
+concurrency:
+  group: plan-${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  TF_VERSION: "1.9.8" # bump in ONE place; keep in sync with required_version
+  TG_VERSION: "0.67.0"
+
+jobs:
+  plan:
+    name: plan-${{ matrix.env }}
+    runs-on: ubuntu-latest
+    # Read-only posture note: plans need real AWS reads (state + refresh).
+    # Use dedicated plan/apply roles per env; prod role trusted only on main + prod env.
+    environment: ${{ matrix.env }}
+    strategy:
+      fail-fast: false # plan dev even if prod plan errors — see ALL problems at once
+      matrix:
+        env: [dev, prod]
+
+    defaults:
+      run:
+        working-directory: terragrunt-tutorial/13-capstone-project/live/${{ matrix.env }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform ${{ env.TF_VERSION }}
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false # wrapper mangles raw stdout — must be off to capture plans
+
+      - name: Install Terragrunt ${{ env.TG_VERSION }}
+        run: |
+          curl -sSL -o terragrunt \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/terragrunt
+          terragrunt --version
+
+      - name: Check formatting (hclfmt + fmt)
+        run: |
+          terragrunt hclfmt --check
+          terraform fmt -check -recursive .
+
+      - name: Configure AWS credentials (OIDC — no stored keys 🔐)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Validate all units
+        run: terragrunt run-all validate --terragrunt-non-interactive
+
+      - name: Plan all units
+        id: plan
+        run: |
+          set +e
+          terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 4 \
+            > plan.log 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          set -e
+          # Keep the comment readable: last 60KB of the plan
+          tail -c 60000 plan.log > plan-tail.log
+          echo "PLAN_FAILED if non-zero exit (run-all aggregates unit failures)"
+          exit 0 # always continue so the diff is posted even on failure
+
+      - name: Post plan as PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.readFileSync(
+              `terragrunt-tutorial/13-capstone-project/live/${{ matrix.env }}/plan-tail.log`, 'utf8');
+            const body = [
+              `## 🌍 Terragrunt plan — \`${{ matrix.env }}\``,
+              '',
+              '<details><summary>Show plan output</summary>',
+              '',
+              '```terraform',
+              log.slice(-60000),
+              '```',
+              '</details>',
+              '',
+              '_Pinned toolchain: TF ${{ env.TF_VERSION }} · TG ${{ env.TG_VERSION }}_'
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Fail the job if plan failed
+        # Reads the exit code captured above — comment first, verdict after.
+        run: |
+          test "${{ steps.plan.outputs.exit_code }}" = "0"
