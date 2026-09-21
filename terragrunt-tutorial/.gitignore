@@ -1,0 +1,30 @@
+# Terragrunt / Terraform — never commit these
+.terragrunt-cache/
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+*generated*.tf
+
+# Lesson-generated demo files (created by `apply` in local-provider lessons)
+greeting-*.txt
+server-*.txt
+demo-*.txt
+app-*.txt
+base-*.txt
+middle-*.txt
+top-*.txt
+network-*.txt
+hook-marker.txt
+
+# OS / editor noise
+.DS_Store
+.idea/
+.vscode/
+*.swp
