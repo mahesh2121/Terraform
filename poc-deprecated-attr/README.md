@@ -129,3 +129,53 @@ aws = {
 
 Paste your "one more similar warning" (the full text) if it doesn't match the
 table — same hunt-and-replace loop applies.
+
+## 6. What about Renovate? 🤖
+
+[Renovate](https://docs.renovatebot.com/) is the dependency-update bot that should
+own the *upgrade* half of this story. What it would have done for THIS issue:
+
+```
+AWS provider 6.0 released
+        │ Renovate opens PR: "Update terraform aws to v6"
+        ▼
+CI plan job runs on that PR (Lesson 15)
+        │ plan output shows: data.aws_region.current.name is deprecated ⚠️
+        ▼
+You fix .name → .region IN THE SAME PR, plan goes clean, merge ✅
+```
+
+Same for the `.terraform/modules/` bucket: when upstream modules ship fixed
+releases, Renovate's module-bump PRs carry them in — no manual version hunting.
+
+**What Renovate does NOT do:** rewrite your code. It upgrades *versions* and
+surfaces the warnings in reviewable PRs; the `.name` → `.region` edit is still
+yours (Sections 1–3 above). Think: Renovate = upgrade delivery, you = fix author.
+
+### Setup (pick one)
+
+**Option A — Hosted app (recommended, 5 min):**
+1. Install `github.com/apps/renovate` on your repo/org.
+2. Copy this POC's [`renovate.json`](renovate.json) to your **repo root**.
+3. Merge Renovate's onboarding PR. First Terraform PRs arrive next Monday <6am IST.
+
+**Option B — Self-hosted:** no app install; instead copy
+[`renovate-self-hosted.yml.example`](renovate-self-hosted.yml.example) to
+`.github/workflows/renovate.yml` (drop `.example`, set latest action version,
+add `RENOVATE_TOKEN` secret). Same `renovate.json` drives both options.
+
+### What this `renovate.json` does (read it top to bottom)
+
+| Block | Why |
+|---|---|
+| `extends: config:recommended` | Sane defaults (conventional commits, conflict handling, onboarding) |
+| `schedule` + `timezone` | Update PRs land Monday early morning, not Friday evening |
+| `enabledManagers: terraform, regex` | Only Terraform providers/modules + our Terragrunt matcher run |
+| Group `hashicorp/aws` | One PR per provider release, not one per folder |
+| Majors: no automerge + `needs-plan-review` | v5→v6-style jumps always get human + plan review (deprecations hide in majors!) |
+| Patches: automerge | Safe fixes merge themselves once the plan job passes |
+| `regexManagers` for `terragrunt.hcl` | Renovate has no native Terragrunt manager, so this regex watches `source = "git::...?ref=vX.Y.Z"` pins and proposes tag bumps — exactly the Lesson 10 promotion flow, automated |
+| `prBodyNotes` | Every Terraform PR reminds reviewers to check plan output for deprecations |
+
+Verify your config any time: `npx --yes renovate-config-validator` (or the
+"Validate" step Renovate adds to its onboarding PR).

@@ -1,0 +1,25 @@
+# SELF-HOSTED RENOVATE (Option B) — only needed if you DON'T use the hosted app.
+# The hosted Mend Renovate app (github.com/apps/renovate) is recommended: zero workflow needed.
+#
+# To use this file:
+#   1. Create a GitHub PAT (classic) with repo + workflow scopes, or a fine-grained
+#      token — store it as a repo secret named RENOVATE_TOKEN.
+#   2. Check the latest major at github.com/renovatebot/github-action/releases,
+#      replace @vX below, copy this file to .github/workflows/renovate.yml
+#      (drop the .example suffix).
+
+name: renovate-self-hosted
+
+on:
+  schedule:
+    - cron: "0 4 * * 1" # Mondays 04:00 UTC (renovate.json schedule refines further)
+  workflow_dispatch: {} # manual "check for updates now"
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Renovate
+        uses: renovatebot/github-action@vX # ← REPLACE with latest major (see header)
+        with:
+          token: ${{ secrets.RENOVATE_TOKEN }}

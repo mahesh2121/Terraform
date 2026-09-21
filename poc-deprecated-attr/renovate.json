@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Asia/Kolkata",
+  "schedule": ["before 6am on Monday"],
+  "labels": ["dependencies", "terraform"],
+  "enabledManagers": ["terraform", "regex"],
+  "packageRules": [
+    {
+      "description": "Group all AWS provider updates into one PR",
+      "matchDatasources": ["terraform-provider"],
+      "matchPackageNames": ["hashicorp/aws"],
+      "groupName": "terraform aws provider"
+    },
+    {
+      "description": "Majors need a human + plan review (deprecations like .name -> .region hide here)",
+      "matchDatasources": ["terraform-provider", "terraform-module"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "terraform", "needs-plan-review"]
+    },
+    {
+      "description": "Automerge safe patch updates once branch protection (plan job) passes",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    }
+  ],
+  "regexManagers": [
+    {
+      "description": "Terragrunt units pinned to git tags via source ?ref=vX.Y.Z",
+      "fileMatch": ["(^|/)terragrunt\\.hcl$"],
+      "matchStrings": [
+        "source\\s*=\\s*\"git::https://github\\.com/(?<depName>[^/\\s]+/[^/\\.\\s]+)(\\.git)?//[^\\?\"\\s]*\\?ref=(?<currentValue>[^\"\\s]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "lookupNameTemplate": "{{{depName}}}"
+    }
+  ],
+  "prBodyNotes": [
+    "Terraform update — read the plan job output on this PR for deprecation warnings (e.g. aws_region .name -> .region) before merging."
+  ]
+}

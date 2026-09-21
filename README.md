@@ -27,3 +27,9 @@ include real AWS examples (marked ⚠️, destroy after use).
 | [`instance/`](instance) | First EC2 instance + provider + variables |
 | [`variables/`](variables) | Variable types: string/number/bool/list/map/object + validation |
 | [`Nginx/`](Nginx) | EC2 + Nginx provisioning example |
+
+## 🧪 POCs (point-in-time fixes, with proof)
+
+| Folder | Contents |
+|---|---|
+| [`poc-deprecated-attr/`](poc-deprecated-attr) | Reproduce + fix `data.aws_region.current.name` v6 deprecation, occurrence counter, Renovate setup |
