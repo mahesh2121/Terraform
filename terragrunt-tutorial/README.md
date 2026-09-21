@@ -30,7 +30,7 @@ Terraform, and how to use every major concept with hands-on examples.
 | 13 | [Capstone Project](13-capstone-project/README.md) | Full real-world AWS project: VPC + EC2 + S3 wired together, multi-env |
 | 14 | [Cheatsheet & FAQ](14-cheatsheet-faq/README.md) | Command cheatsheet, Terraform vs Terragrunt, migration guide, troubleshooting |
 | 15 | [CI/CD Pipelines ⭐ L3](15-cicd-pipelines/README.md) | GitHub Actions: plan on PR, gated prod applies, OIDC auth, drift detection |
-| 16 | [Company Challenges 🏢](16-company-challenges/README.md) | Real problems companies face + solutions + incident runbooks + interview prep |
+| 16 | [Company Challenges 🏢](16-company-challenges/README.md) | Real problems + solutions + 4 runnable incident labs + runbooks + interview prep |
 
 ---
 

@@ -200,13 +200,23 @@ who/what/when/approved-by is always one git log away."*
 | 3 — Governed | Policy + cost gates, OIDC, drift bots, runbooks | This lesson + L15 |
 | 4 — Resilient | Multi-account, tested DR, game days, audit-ready | This lesson, challenges 5/9/10 |
 
-## ✏️ Hands-on exercises (do these — they simulate real incidents!)
+## 🧪 Hands-on labs (all FREE — local provider, no AWS)
 
-1. **Stuck lock drill:** start an `apply` in Lesson 11, kill it mid-run, then follow the
-   [State Lock Runbook](runbooks/state-lock-runbook.md) to recover safely.
-2. **Drift drill:** `apply` Lesson 11, then manually edit a generated `.txt` file
-   (your "ClickOps"), run `run-all plan` — observe Terragrunt detecting it. Follow the
-   [Drift Response Runbook](runbooks/drift-response-runbook.md).
+Don't just read about incidents — **cause and fix them safely** (~10 min each):
+
+| Lab | Incident simulated | What you'll do |
+|---|---|---|
+| [lab-1-drift](labs/lab-1-drift/) | ClickOps drift (Challenge 2) | apply → hand-edit the file → `plan -detailed-exitcode` catches it → revert-or-codify |
+| [lab-2-blast-radius](labs/lab-2-blast-radius/) | Prod accident (Challenge 5) | prod `apply` blocked by a `before_hook` guard until explicitly confirmed |
+| [lab-3-secrets](labs/lab-3-secrets/) | Leaked credentials (Challenge 4) | run `secrets-hunt.sh` (finds REAL leaks in this repo!), then pass secrets via env |
+| [lab-4-lock-contention](labs/lab-4-lock-contention/) | Lock fight (Challenge 1) | collide two applies → lock error → recover with `-lock-timeout` |
+
+## ✏️ Hands-on exercises
+
+1. **Drift drill:** complete [lab-1-drift](labs/lab-1-drift/), then classify and close
+   it following the [Drift Response Runbook](runbooks/drift-response-runbook.md).
+2. **Lock drill:** complete [lab-4-lock-contention](labs/lab-4-lock-contention/), then walk the
+   [State Lock Runbook](runbooks/state-lock-runbook.md) step by step.
 3. **Blast-radius drill:** on paper, walk the capstone ([L13](../13-capstone-project/README.md))
    and list every guard stopping a dev→prod accident. Find at least 4.
 4. **Secrets hunt:** search this repo for `AKIA`, `secret`, `password` — note every hit
