@@ -4,6 +4,10 @@
 # shared locals/inputs (L04/L05), AWS guards (L12).
 # ═══════════════════════════════════════════════════════════════════
 
+# Parent-only config: defines shared settings but no unit of its own,
+# so run-all skips executing it (children still inherit via include).
+skip = true
+
 locals {
   # Read env + region layers so the ROOT can use them (e.g. account guard).
   env    = read_terragrunt_config(find_in_parent_folders("env.hcl"))

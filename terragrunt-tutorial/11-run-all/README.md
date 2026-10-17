@@ -124,6 +124,16 @@ Scope applies per env/region folder so a `dev` change can never touch `prod`
 
 ---
 
+## 7. Notes for newer Terragrunt versions
+
+- Parent-only configs (a root `terragrunt.hcl` with no `terraform` block of its
+  own) are excluded from the queue with `skip = true` — you'll see that line in
+  every root config in this course (Lessons 00, 03, 05, 09, 13). Without it,
+  `run-all` from a parent folder tries to execute the parent and errors.
+- On recent releases `run-all` is renamed to `run --all`
+  (`terragrunt run --all plan`), with the same flags and ordering. Everything in
+  this lesson applies 1:1 — only the command name changed.
+
 ## ✏️ Exercises
 
 1. Run `graph-dependencies` in `live/dev` and sketch the 3-node graph.

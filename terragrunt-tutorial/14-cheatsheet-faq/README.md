@@ -159,6 +159,16 @@ a data lookup or a merged unit, not a dependency).
 → Check the official compatibility matrix; pin both versions in CI
 (`terraform_version_constraint` exists too).
 
+**`run-all` fails on my root/parent config?**
+→ Parent-only configs (no `terraform` block of their own) must carry
+`skip = true` so the queue skips them — or run `run-all` from `live/`
+(or deeper) instead of the repo root.
+
+**Is `run-all` deprecated?**
+→ In the newest Terragrunt releases, yes: use `terragrunt run --all plan`
+(same behavior, flags, and ordering). This course targets `TG 0.67`, where
+`run-all` works exactly as written.
+
 ## 6. Where to go from here
 
 - [Lesson 15 — CI/CD Pipelines](../15-cicd-pipelines/README.md) ⭐ Level-3: plan on PR,

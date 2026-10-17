@@ -2,6 +2,10 @@
 # Every child (dev, prod, ...) inherits this via `include`.
 # The state key is AUTO-GENERATED per folder — no hand-editing, no collisions.
 
+# Parent-only config: defines shared settings but no unit of its own,
+# so run-all skips executing it (children still inherit via include).
+skip = true
+
 remote_state {
   backend = "s3"
   config = {

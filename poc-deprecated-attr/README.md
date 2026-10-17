@@ -129,11 +129,11 @@ aws = {
 
 ## Bonus: other v6 renames worth grepping
 
-| Old (warns on v6) | New |
-|---|---|
-| `data.aws_region.current.name` | `data.aws_region.current.region` |
-| `aws_s3_bucket.*.region` | `aws_s3_bucket.*.bucket_region` |
-| `aws_eip.*.vpc = true` | `domain = "vpc"` |
+| Old (warns on v6) | New | Counter | Fixer |
+|---|---|---|---|
+| `data.aws_region.current.name` | `data.aws_region.current.region` | ✅ | ✅ auto |
+| `aws_s3_bucket.*.region` | `aws_s3_bucket.*.bucket_region` | ✅ | ✅ auto |
+| `aws_eip` with `vpc = true` | `domain = "vpc"` | ✅ flags it | 🖐️ manual only — sed can't confirm the resource type, so the script refuses to guess |
 
 Paste your "one more similar warning" (the full text) if it doesn't match the
 table — same hunt-and-replace loop applies.
@@ -217,6 +217,9 @@ Safety rules baked into the fixer:
   (upgrade those modules instead).
 - **Never touches `before/`** — the intentional repro survives.
 - **v6-only warning** — reminds you `.region` doesn't exist on provider v5.
+- **Two safe renames, one refusal** — `aws_region .name` and `s3 bucket .region`
+  are auto-fixed (anchored patterns, provably safe); `vpc = true` is only
+  *flagged* for manual review since the resource type can't be proven by grep.
 - **Re-scans after writing** and reports leftovers (re-run if any).
 
 ### Try the fixer safely (2-minute demo, zero risk to the POC)

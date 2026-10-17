@@ -9,16 +9,17 @@
 ```bash
 cd live/dev/demo
 terragrunt apply  # type "yes"
-cat ../../../../modules/driftdemo/*.txt 2>/dev/null || find $(terragrunt terragrunt-info --json 2>/dev/null | grep -o '"WorkingDir": *"[^"]*"' | head -1) -name '*.txt'
-# Simpler: the file lives in the module dir copy under .terragrunt-cache — or just trust plan in step 3.
+cat "$(terragrunt output -raw file_path)"   # the managed file (lives under .terragrunt-cache)
 ```
 
 ### 2. Play the villain 🦹 — make a ClickOps edit
 Terraform tracks the file content. Edit it behind Terraform's back, exactly like a
 console tweak:
 ```bash
-# Find the generated file (under .terragrunt-cache) and append a manual change:
-find .terragrunt-cache -name 'notice-*.txt' -exec sh -c 'echo "MANUAL HOTFIX (not in code!)" >> "$1"' _ {} \;
+# Append a manual change directly to the managed file:
+FILE="$(terragrunt output -raw file_path)"
+echo "MANUAL HOTFIX (not in code!)" >> "$FILE"
+cat "$FILE"   # 👆 your "console edit" is now live — and unknown to Terraform
 ```
 
 ### 3. Detect it like the nightly drift job does

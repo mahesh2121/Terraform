@@ -22,6 +22,12 @@ if you hit weird errors. For this course:
 - **Terraform >= 1.5**
 - **Terragrunt >= 0.55** (the `run-all` command syntax used here)
 
+> 📌 **Version currency (2026):** the newest Terragrunt releases renamed `run-all`
+> to `run --all` (e.g. `terragrunt run --all plan`) and recommend naming parent
+> configs `root.hcl` instead of `terragrunt.hcl`. This course targets `TG 0.67`
+> (pinned in Lesson 15), where every command works exactly as written — learn the
+> concepts here, then adopt the new names when you upgrade.
+
 > OpenTofu users: Terragrunt also supports `tofu` as the binary
 > (`--tf-path tofu` or `terraform_binary = "tofu"`). The concepts are identical.
 

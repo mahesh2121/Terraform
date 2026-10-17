@@ -21,6 +21,9 @@ base-*.txt
 middle-*.txt
 top-*.txt
 network-*.txt
+notice-*.txt
+token-status-*.txt
+receipt-*.txt
 hook-marker.txt
 
 # OS / editor noise

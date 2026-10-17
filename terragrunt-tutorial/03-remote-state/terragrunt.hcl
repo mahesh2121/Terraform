@@ -6,6 +6,10 @@
 # ⚠️ Replace bucket/table/region with YOUR bootstrap resources before apply.
 # Comment out this whole block to fall back to local state while learning.
 
+# Parent-only config: defines shared settings but no unit of its own,
+# so run-all skips executing it (children still inherit via include).
+skip = true
+
 remote_state {
   backend = "s3"
 
