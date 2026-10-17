@@ -41,8 +41,12 @@ poc-deprecated-attr/
 │   ├── data.tf
 │   ├── locals.tf
 │   └── outputs.tf
+├── deprecation-gate.yml.example   # copy to .github/workflows/ to enforce (§7)
+├── renovate.json                  # copy to repo root for upgrade PRs (§6)
+├── renovate-self-hosted.yml.example
 └── scripts/
-    └── find-deprecated-region.sh  # counts EVERY occurrence ("their number")
+    ├── find-deprecated-region.sh  # counts EVERY occurrence ("their number")
+    └── fix-deprecated-region.sh   # auto-fix: dry-run default, --apply writes
 ```
 
 ## 1. Reproduce it (before)
@@ -94,6 +98,10 @@ Two buckets, two different fixes:
 |---|---|---|
 | Your `.tf` files | Code you own | `.name` → `.region` (this POC) |
 | `.terraform/modules/...` | Upstream registry/git modules | **Upgrade the module version** — never hand-edit (it re-downloads). If no fixed release exists, temporarily pin `aws ~> 5.0` for that stack. |
+
+> 🔎 The default scan deliberately includes this POC's own repro
+> (`before/locals.tf:6`) so you can watch it work. CI mode (`--check`, §7)
+> excludes that folder and fails on anything else.
 
 ## 4. ⚠️ The version trap (read before you edit!)
 
@@ -179,3 +187,62 @@ add `RENOVATE_TOKEN` secret). Same `renovate.json` drives both options.
 
 Verify your config any time: `npx --yes renovate-config-validator` (or the
 "Validate" step Renovate adds to its onboarding PR).
+
+## 7. From POC to enforced practice (auto-fix + CI gate) 🛡️
+
+Finding occurrences by hand doesn't scale. The full loop this POC now ships:
+
+```
+┌─────────┐    ┌────────┐    ┌──────┐    ┌──────────┐
+│ Counter │───▶│ Fixer  │───▶│ Gate │───▶│ Renovate │
+└─────────┘    └────────┘    └──────┘    └──────────┘
+ find them      fix them     block        deliver future
+ (grep)         (sed)        regressions  upgrades as PRs
+```
+
+### Auto-fix (dry-run by default)
+
+```bash
+# See what WOULD change (writes nothing):
+./poc-deprecated-attr/scripts/fix-deprecated-region.sh .
+
+# Actually rewrite:
+./poc-deprecated-attr/scripts/fix-deprecated-region.sh --apply .
+# Then: terraform validate  → clean, and the counter → TOTAL: 0
+```
+
+Safety rules baked into the fixer:
+- **Dry-run unless `--apply`** — you always preview first.
+- **Never touches `.terraform/`** — upstream hits are reported, not edited
+  (upgrade those modules instead).
+- **Never touches `before/`** — the intentional repro survives.
+- **v6-only warning** — reminds you `.region` doesn't exist on provider v5.
+- **Re-scans after writing** and reports leftovers (re-run if any).
+
+### Try the fixer safely (2-minute demo, zero risk to the POC)
+
+```bash
+rm -rf /tmp/fixdemo && mkdir -p /tmp/fixdemo && cp -r poc-deprecated-attr/before /tmp/fixdemo/
+./poc-deprecated-attr/scripts/find-deprecated-region.sh /tmp/fixdemo   # TOTAL: 1
+./poc-deprecated-attr/scripts/fix-deprecated-region.sh /tmp/fixdemo    # dry-run preview
+./poc-deprecated-attr/scripts/fix-deprecated-region.sh --apply /tmp/fixdemo  # ✏️ fixed
+./poc-deprecated-attr/scripts/find-deprecated-region.sh /tmp/fixdemo   # TOTAL: 0 ✅
+diff poc-deprecated-attr/before/locals.tf /tmp/fixdemo/before/locals.tf  # see the one-word change
+```
+
+### CI gate (activate in 30 seconds)
+
+Copy [`deprecation-gate.yml.example`](deprecation-gate.yml.example) to
+`.github/workflows/deprecation-gate.yml` (drop the `.example` suffix) and push.
+It runs on every PR touching `*.tf` and **fails the PR** if any new
+`data.aws_region.<label>.name` appears in own code. No secrets, no AWS, no
+Terraform needed — pure grep, finishes in seconds. (Shipped as an `.example`
+because workflow files require the `workflows` permission to push — copy it from
+your own machine.) The `before/` repro is allow-listed in `--check` mode, so the
+gate stays green while the demo survives.
+
+```bash
+# Run the exact gate locally before pushing:
+./poc-deprecated-attr/scripts/find-deprecated-region.sh --check .
+# ✅ CI gate passed — no deprecated .name in own code.
+```

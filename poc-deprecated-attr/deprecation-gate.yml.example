@@ -1,0 +1,28 @@
+# CI GATE (example) — fails any PR that (re)introduces the deprecated
+# data.aws_region.<label>.name attribute in own code.
+# Needs no secrets, no AWS, no Terraform — pure grep. Always fast.
+# The POC's intentional repro (poc-deprecated-attr/before) is allow-listed
+# inside the script's --check mode, so this stays green by design.
+#
+# ACTIVATE: copy this file to .github/workflows/deprecation-gate.yml
+# (drop the .example suffix) and push from your own machine.
+
+name: deprecation-gate
+
+on:
+  pull_request:
+    paths:
+      - "**.tf"
+      - ".github/workflows/deprecation-gate.yml"
+      - "poc-deprecated-attr/scripts/**"
+  workflow_dispatch: {} # manual "check now" runs
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fail on deprecated aws_region .name in own code
+        run: ./poc-deprecated-attr/scripts/find-deprecated-region.sh --check .
